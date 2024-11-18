@@ -1,4 +1,4 @@
-module goapi-id/gateway
+module github.com/daniwebdev/go-simple-gateway
 
 go 1.18
 

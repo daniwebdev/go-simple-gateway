@@ -9,11 +9,13 @@ import (
 	"os"
 	"strings"
 
+	"github.com/daniwebdev/go-simple-gateway/middleware"
 	"github.com/gofiber/fiber/v2"
-	"github.com/gofiber/fiber/v2/middleware/logger"
 	"github.com/gofiber/fiber/v2/middleware/recover"
 	"gopkg.in/yaml.v2"
 )
+
+
 
 type Config struct {
 	Endpoint  string            `yaml:"endpoint"`
@@ -26,8 +28,14 @@ type GatewayConfig struct {
 }
 
 func main() {
+	configFile := "config.yml"
+	
+	if len(os.Args) > 1 {
+		configFile = os.Args[1]
+	}
+
 	// Load configuration from YAML file
-	config, err := loadConfig("config.yml")
+	config, err := loadConfig(configFile)
 	if err != nil {
 		log.Fatalf("Failed to load config: %v", err)
 	}
@@ -35,10 +43,14 @@ func main() {
 	app := fiber.New()
 
 	// Middleware
-	app.Use(logger.New())
+	// app.Use(logger.New())
+	app.Use(middleware.LoggerMiddleware())
 	app.Use(recover.New())
 
 	// Routes
+	app.Get("/", func(c *fiber.Ctx) error {
+		return c.SendString("Ok")
+	})
 	app.All("/v1/*", func(c *fiber.Ctx) error {
 		path := c.Params("*")
 
@@ -78,18 +90,25 @@ func main() {
 		}
 
 		// Set body parameter from the request (if applicable)
-		if  c.Method() == fiber.MethodPost ||
+		if c.Method() == fiber.MethodPost ||
 			c.Method() == fiber.MethodPut ||
 			c.Method() == fiber.MethodPatch ||
 			c.Method() == fiber.MethodDelete {
-				bodyBytes := c.Body()
-				req.Body = ioutil.NopCloser(bytes.NewReader(bodyBytes))
-				req.ContentLength = int64(len(bodyBytes))
-			}
+			bodyBytes := c.Body()
+			req.Body = ioutil.NopCloser(bytes.NewReader(bodyBytes))
+			req.ContentLength = int64(len(bodyBytes))
+		}
 
-		// Set headers from the configuration
+		// Pass all headers from the incoming request to the new request
+		c.Request().Header.VisitAll(func(key, value []byte) {
+			req.Header.Set(string(key), string(value))
+		})
+
+		// Set headers from the configuration, allowing client headers to overwrite
 		for key, value := range config.Headers {
-			req.Header.Set(key, value)
+			if req.Header.Get(key) == "" {
+				req.Header.Set(key, value)
+			}
 		}
 
 		// Perform the HTTP request

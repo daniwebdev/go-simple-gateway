@@ -1,9 +1,9 @@
 configs:
-  - endpoint: http://localhost:8011/
+  - endpoint: http://host.docker.internal:8011
     namespace: httpbin
     header_auth:
       Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c
       X-Api-Key: testAPI KEY
-  - endpoint: http://ip-api.com/
+  - endpoint: http://ip-api.com/json
     namespace: ip-api
     header_auth:

@@ -1,0 +1,36 @@
+version: '3.8'
+services:
+  app:
+    container_name: simple-gateway-app
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "8080:8080"
+    restart: unless-stopped
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    depends_on:
+      - redis
+    networks:
+      - goapi-gateway-network
+
+  redis:
+    container_name: simple-gateway-redis
+    image: redis:7.0.5-alpine
+    networks:
+      - goapi-gateway-network
+    ports:
+      - "6300:6379"
+
+  httpbin:
+    container_name: simple-gateway-httpbin
+    image: stevet/httpbin-alpine
+    ports:
+      - "8011:8000"
+    networks:
+      - goapi-gateway-network
+
+networks:
+  goapi-gateway-network:
+    driver: bridge
